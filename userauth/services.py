@@ -16,22 +16,24 @@ class TransactionsManagement(object):
                 )
         lend_transaction.save()
 
-    def create_borrow_transaction_user(self,data):
+    def create_borrow_transaction_user(self,data,instance):
        
         borrow_transaction = Transactions.objects.create(
                     owner=User.objects.get(id=data['transaction_with']),
                     transaction_with=User.objects.get(id=data['owner']),
+                    transaction_id = instance.transaction_id,
                     transaction_type="borrow",
                     amount=data["amount"],
                     reason=data["reason"],
                 )
         borrow_transaction.save()
     
-    def create_borrow_transaction_user_return(self,data):
+    def create_borrow_transaction_user_return(self,data,owner):
        
         borrow_transaction = Transactions.objects.create(
                     owner=User.objects.get(id=data['transaction_with']),
                     transaction_with=User.objects.get(id=data['owner']),
+                    transaction_id = owner.transaction_id,
                     transaction_type="borrow",
                     amount=data["amount"],
                     reason=data["reason"],

@@ -81,16 +81,16 @@ class TransactionPostView(generics.CreateAPIView):
                 transaction_mangement.create_lend_transaction_user(request_data, instance)
             elif (
                 request.data["transaction_type"] == "lend"
-                and request.data["transaction_status"] == "true"
+                and request.data.get("transaction_status") == "true"
             ):
                 try:
                     if int(request.user.balance.balance) >= int(request.data["amount"]):
+                        owner = serializer.save()
                         other = (
                             transaction_mangement.create_borrow_transaction_user_return(
-                                request_data
+                                request_data,owner
                             )
                         )
-                        owner = serializer.save()
                         balance_transactions = BalanceManagement().get_balance_data(
                             owner.owner
                         )
@@ -117,10 +117,10 @@ class TransactionPostView(generics.CreateAPIView):
 
             elif request.data["transaction_type"] == "lend":
                 if int(request.user.balance.balance) >= int(request.data["amount"]):
+                    instance = serializer.save()
                     TransactionsManagement().create_borrow_transaction_user(
-                        request_data
+                        request_data,instance
                     )
-                    serializer.save()
                 else:
                     return Response(
                         {"status": BALANCE_ERROR}, status=HTTP_400_BAD_REQUEST
@@ -157,48 +157,71 @@ class TransactionGetView(generics.CreateAPIView):
 class TransactionDetailView(generics.CreateAPIView):
     '''transaction_status update'''
     permission_classes = (IsAuthenticated,)
-    def patch(self, request, id):
-        transactions = TransactionsManagement().get_transactions_by_id(id)
-        other_transactions = TransactionsManagement().get_transactions_by_id(id - 1)
-        if transactions and other_transactions:
-            balance_transactions = BalanceManagement().get_balance_data(
-                transactions.owner
-            )
-            balance_other_transactions = BalanceManagement().get_balance_data(
-                other_transactions.owner
-            )
-            if (
-                transactions.transaction_status != True
-                and other_transactions.transaction_status != True
-                and transactions.transaction_type == "lend"
-            ):
-                if balance_transactions.balance >= other_transactions.amount:
-                    with transaction.atomic():
-                        balance_transactions.balance = (
-                            balance_transactions.balance
-                            - int(other_transactions.amount)
-                        )
-                        balance_transactions.save()
-                        balance_other_transactions.balance = (
-                            balance_other_transactions.balance
-                            + int(other_transactions.amount)
-                        )
-                        balance_other_transactions.save()
-                        transactions.transaction_status = True
-                        transactions.save()
-                        other_transactions.transaction_status = True
-                        other_transactions.save()
-                else:
-                    return Response(
-                        {"status": BALANCE_ERROR}, status=HTTP_400_BAD_REQUEST
-                    )
-                return Response(
-                    {"data": TRANSACTION_STATUS}, status=HTTP_205_RESET_CONTENT
+    def patch(self, request, transaction_id):
+        # transactions = TransactionsManagement().get_transactions_by_id(id)
+        # other_transactions = TransactionsManagement().get_transactions_by_id(id - 1)
+        # if transactions and other_transactions:
+        #     balance_transactions = BalanceManagement().get_balance_data(
+        #         transactions.owner
+        #     )
+        #     balance_other_transactions = BalanceManagement().get_balance_data(
+        #         other_transactions.owner
+        #     )
+        #     if (
+        #         transactions.transaction_status != True
+        #         and other_transactions.transaction_status != True
+        #         and transactions.transaction_type == "lend"
+        #     ):
+        #         if balance_transactions.balance >= other_transactions.amount:
+        #             with transaction.atomic():
+        #                 balance_transactions.balance = (
+        #                     balance_transactions.balance
+        #                     - int(other_transactions.amount)
+        #                 )
+        #                 balance_transactions.save()
+        #                 balance_other_transactions.balance = (
+        #                     balance_other_transactions.balance
+        #                     + int(other_transactions.amount)
+        #                 )
+        #                 balance_other_transactions.save()
+        #                 transactions.transaction_status = True
+        #                 transactions.save()
+        #                 other_transactions.transaction_status = True
+        #                 other_transactions.save()
+        #         else:
+        #             return Response(
+        #                 {"status": BALANCE_ERROR}, status=HTTP_400_BAD_REQUEST
+        #             )
+        #         return Response(
+        #             {"data": TRANSACTION_STATUS}, status=HTTP_205_RESET_CONTENT
+        #         )
+        #     return Response({"data": TRANSACTION_STATUS_ERROR}, status=HTTP_200_OK)
+        # return Response(
+        #     {"data": TRANSACTION_NOT_FOUND_ERROR}, status=HTTP_404_NOT_FOUND
+        # )
+        transaction_lend1= Transactions.objects.filter(transaction_id=transaction_id,transaction_type = "lend").first()
+        balance1 = Balance.objects.filter(owner=transaction_lend1.owner).first()
+        transaction_lend2= Transactions.objects.filter(transaction_id=transaction_id,transaction_type = "borrow").first()
+        balance2 = Balance.objects.filter(transaction_with=transaction_lend2.owner).first()
+        if int(request.user.balance.balance) >= transaction_lend1.amount:
+            with transaction.atomic():
+                balance1.balance = (
+                    balance1.balance
+                    - transaction_lend1.amount
                 )
-            return Response({"data": TRANSACTION_STATUS_ERROR}, status=HTTP_200_OK)
-        return Response(
-            {"data": TRANSACTION_NOT_FOUND_ERROR}, status=HTTP_404_NOT_FOUND
-        )
+                balance1.save()
+                balance2.balance = (
+                    balance2.balance
+                    + transaction_lend1.amount
+                )
+                balance2.save()
+                transaction_lend1.transaction_status = True
+                transaction_lend1.save()
+                transaction_lend2.transaction_status = True
+                transaction_lend2.save()
+
+                return Response({"data":"successfully"},status=200)
+
 
 
 
