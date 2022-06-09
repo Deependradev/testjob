@@ -1,0 +1,36 @@
+const { createProxyMiddleware } = require("http-proxy-middleware");
+
+module.exports=app=>(
+    app.use(
+        createProxyMiddleware("auth/login/",
+        {
+            target:"http://127.0.0.1:8000/",
+            changeHandler:true,
+        }
+        ),
+        createProxyMiddleware("auth/get_transactions/",
+        {
+            target:"http://127.0.0.1:8000/",
+            changeHandler:true,
+        }
+        ),
+        createProxyMiddleware("auth/add_transaction/",
+        {
+            target:"http://127.0.0.1:8000/",
+            changeHandler:true,
+        }
+        ),
+        createProxyMiddleware("auth/mark_paid/",
+        {
+            target:"http://127.0.0.1:8000/",
+            changeHandler:true,
+        }
+        ),
+        createProxyMiddleware("auth/all_users/",
+        {
+            target:"http://127.0.0.1:8000/",
+            changeHandler:true,
+        }
+        ),
+    )
+)
