@@ -28,22 +28,28 @@ class TransactionsManagement(object):
                 )
         borrow_transaction.save()
     
-    def create_borrow_transaction_user_return(self,data,owner):
-       
+    def create_borrow_transaction_user_status_paid(self,data,instance):
         borrow_transaction = Transactions.objects.create(
                     owner=User.objects.get(id=data['transaction_with']),
                     transaction_with=User.objects.get(id=data['owner']),
-                    transaction_id = owner.transaction_id,
+                    transaction_id = instance.transaction_id,
                     transaction_type="borrow",
+                    transaction_status=True,
                     amount=data["amount"],
                     reason=data["reason"],
                 )
         borrow_transaction.save()
-        return borrow_transaction
     
     def get_owner_transactions(self,id):
         
         return Transactions.objects.filter(owner=id).order_by('-id')
+
+    def get_transactions_lend(self,transaction_id):
+        return Transactions.objects.filter(transaction_id=transaction_id,transaction_type="lend").first()
+
+    def get_transactions_borrow(self,transaction_id):
+        return Transactions.objects.filter(transaction_id=transaction_id,transaction_type="borrow").first()
+
 
     def get_transactions_by_id(self,id):
        

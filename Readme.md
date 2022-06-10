@@ -1,8 +1,5 @@
 To work on the sample code, you'll need to clone project's repository to your local computer. If you haven't, do that first.
 
-github repo :
-
-git clone
 
 # money-control
 
@@ -36,6 +33,7 @@ git clone
     7)Start the Django development server:
 
         $ python manage.py runserver
+
 
 
 

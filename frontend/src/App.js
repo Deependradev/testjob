@@ -15,9 +15,7 @@ import Table from './components/Table';
 import { useEffect , useState } from 'react';
 
 const App = ()=> {
-  
     const [accessToken , setAccessToken] = useState('')
-
 useEffect(()=>{
   setAccessToken(localStorage.getItem("accessToken"))
 })
