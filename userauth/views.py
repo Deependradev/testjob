@@ -60,7 +60,6 @@ class LogoutView(generics.CreateAPIView):
         except Exception as e:
             return Response(status=HTTP_400_BAD_REQUEST)
 
-
 class RegisterView(generics.CreateAPIView):
     """Register user"""
 
@@ -83,66 +82,61 @@ class TransactionPostView(generics.CreateAPIView):
             if serializer.is_valid():
                 transaction_mangement = TransactionsManagement()
                 balance_management = BalanceManagement()
-                if request.data["transaction_type"] == "borrow" :
+                if request.data["transaction_type"] == "borrow" and request.data['transaction_status'] == "false":
                     instance = serializer.save()
                     transaction_mangement.create_lend_transaction_user(
                         request_data, instance
                     )
-
                 elif (
                     request.data["transaction_type"] == "lend"
                     and request.data["transaction_status"] == "true"
                 ):
-                    try:
-                        if int(request.user.balance.balance) >= int(request.data["amount"]):
-                                instance = serializer.save()
-                                transaction_mangement.create_borrow_transaction_user_status_paid(
-                                    request_data, instance
-                                )
-
-                                transaction_lend = (
-                                    transaction_mangement().get_transactions_lend(
-                                        instance.transaction_id
-                                    )
-                                )
-                                balance_lend = balance_management.get_balance_data(
-                                    transaction_lend.owner
-                                )
-                                transaction_borrow = (
-                                    transaction_mangement().get_transactions_borrow(
-                                        instance.transaction_id
-                                    )
-                                )
-                                balance_borrow = balance_management.get_balance_data(
-                                    transaction_borrow.owner
-                                )
-                                balance_lend.balance = (
-                                    balance_lend.balance - transaction_lend.amount
-                                )
-                                balance_lend.save()
-                                balance_borrow.balance = (
-                                    balance_borrow.balance + transaction_lend.amount
-                                )
-                                balance_borrow.save()
-
-                                return Response(
-                                    {
-                                        "status": TRANSACTION_CREATEDOR_PAID,
-                                        "data": serializer.data,
-                                    },
-                                    status=HTTP_201_CREATED,
-                                )
-
-                        else:
-                            return Response(
-                                {"status": BALANCE_ERROR}, status=HTTP_400_BAD_REQUEST
+                    
+                    if int(request.user.balance.balance) >= int(request.data["amount"]):
+                            instance = serializer.save()
+                            transaction_mangement.create_borrow_transaction_user_status_paid(
+                                request_data, instance
                             )
 
-                    except:
+                            transaction_lend = (
+                                transaction_mangement.get_transactions_lend(
+                                    instance.transaction_id
+                                )
+                            )
+                            balance_lend = balance_management.get_balance_data(
+                                transaction_lend.owner
+                            )
+                            transaction_borrow = (
+                                transaction_mangement.get_transactions_borrow(
+                                    instance.transaction_id
+                                )
+                            )
+                            balance_borrow = balance_management.get_balance_data(
+                                transaction_borrow.owner
+                            )
+                            balance_lend.balance = (
+                                balance_lend.balance - transaction_lend.amount
+                            )
+                            balance_lend.save()
+                            balance_borrow.balance = (
+                                balance_borrow.balance + transaction_lend.amount
+                            )
+                            balance_borrow.save()
+
+                            return Response(
+                                {
+                                    "status": TRANSACTION_CREATEDOR_PAID,
+                                    "data": serializer.data,
+                                },
+                                status=HTTP_201_CREATED,
+                            )
+
+                    else:
                         return Response(
-                            {"status": BALANCE_NOT_FOUND_ERROR}, status=HTTP_404_NOT_FOUND
+                            {"status": BALANCE_ERROR}, status=HTTP_400_BAD_REQUEST
                         )
-                elif request.data["transaction_type"] == "lend":
+
+                elif request.data["transaction_type"] == "lend" and request.data['transaction_status'] == "false":
                     if int(request.user.balance.balance) >= int(request.data["amount"]):
                         instance = serializer.save()
                         transaction_mangement.create_borrow_transaction_user(
@@ -161,9 +155,6 @@ class TransactionPostView(generics.CreateAPIView):
                 {"status": TRANSACTION_ERROR, "result": serializer.errors},
                 status=HTTP_400_BAD_REQUEST,
             )
-        
-        
-
 
 class TransactionGetView(generics.CreateAPIView):
     """all Transactions list of login user"""
