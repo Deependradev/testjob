@@ -244,3 +244,26 @@ class AddBalance(generics.CreateAPIView):
             )
         return Response({"data": USER_BALANCE_ERROR}, status=HTTP_400_BAD_REQUEST)
 
+
+class TotalTransactionAmount(generics.CreateAPIView):
+    """total balance, total borrow , total lend"""
+
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        transactions_management = TransactionsManagement()
+        balance = BalanceManagement().get_balance_data(request.user.id)
+        borrow_balance = transactions_management.get_all_borrow_transactions_by_id(
+            request.user.id
+        )
+        lend_balance = transactions_management.get_all_lend_transactions_by_id(
+            request.user.id
+        )
+        return Response(
+            {
+                "balance": balance.balance,
+                "borrow_balance": borrow_balance,
+                "lend_balance": lend_balance,
+            },
+            status=HTTP_200_OK,
+        )
