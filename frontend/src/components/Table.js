@@ -64,9 +64,10 @@ export default function Table() {
     }
 
     async function getTransactionId(e) {
+        debugger
         if (e.target.previousElementSibling.previousElementSibling.textContent == "lend") {
             setTransactionId(parseInt(e.target.previousElementSibling.innerHTML))
-            axios.patch(`auth/mark_paid/${parseInt(e.target.previousElementSibling.innerHTML)}/`, "lend",
+            axios.patch(`auth/mark_paid/${e.target.previousElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.nextElementSibling.innerHTML}/`, "lend",
                 { headers: { Authorization: `Bearer ${localStorage.getItem("accessToken")}`, "Content-Type": "application/x-www-form-urlencoded" } })
                 .then(function (response) {
                     axios.get(`auth/get_transactions/`,
@@ -120,7 +121,7 @@ export default function Table() {
                         <p className="text-dark display-6">All Transaction</p>
                         <table id="transactionTable" className="table table table-striped mt-5" style={{ width: "100%" }}>
 
-                            <thead  >
+                            <thead style={styles.thead} >
                                 <tr>
                                     <th >#</th>
                                     <th >Amount</th>
@@ -139,7 +140,7 @@ export default function Table() {
 
 
 
-                                    JSON.parse(localStorage.getItem('allTransaction')).length == 0 ? <p className="display-6" style={{ fontSize: "32px" }}>No records found!</p>
+                                    JSON.parse(localStorage.getItem('allTransaction')) == null ? <p className="display-6" style={{ fontSize: "32px" }}>No records found!</p>
                                         : JSON.parse(localStorage.getItem('allTransaction')).reverse().map((item, index) => {
                                             let t_status = ''
                                             if (item.transaction_status == true) {
@@ -178,4 +179,10 @@ export default function Table() {
 
 
     )
+}
+
+const styles = {
+        thead:{
+            background:"#1976d2"
+        }
 }

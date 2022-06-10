@@ -33,3 +33,8 @@ tbody {
   table-layout: fixed;
   height: 600px;
 }
+
+body{
+  background-color: white;
+}
+

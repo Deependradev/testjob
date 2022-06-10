@@ -13,9 +13,12 @@ import {
 } from "react-router-dom";
 import Table from './components/Table';
 import { useEffect , useState } from 'react';
+import ResponsiveAppBar from './components/Navbar';
 
 const App = ()=> {
+  
     const [accessToken , setAccessToken] = useState('')
+
 useEffect(()=>{
   setAccessToken(localStorage.getItem("accessToken"))
 })
@@ -24,6 +27,7 @@ useEffect(()=>{
 
   return (
     <BrowserRouter>
+    <ResponsiveAppBar />
     <Routes>
       <Route path="/" element={!accessToken ? <Loginpage /> : <Home />} />
         <Route path="/Home" element={!accessToken ? <Loginpage /> : <Home />} />

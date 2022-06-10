@@ -13,6 +13,25 @@ import { Link, useNavigate } from 'react-router-dom'
 
 export default function AddTransaction() {
 
+    const [balance, setBalance] = React.useState([])
+    React.useEffect(() => {
+        axios.get('auth/all_type_balance/',
+            {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+                    "Content-Type": "application/x-www-form-urlencoded"
+                }
+            })
+            .then((res) => {
+                setBalance(res.data)
+            })
+            .catch(function (error) {
+                // handle error
+                console.log(error);
+            })
+    }, [])
+
+
     const navigate = useNavigate()
 
     const [ok, setOk] = React.useState(null)
@@ -22,6 +41,7 @@ export default function AddTransaction() {
     const [transactionWith, setTransactionWith] = React.useState("")
     const [paid, setPaid] = React.useState(false)
     const [allTransaction, setAllTransaction] = React.useState('')
+    const [lender, setLender] = React.useState()
 
     function amountHandler(e) {
         setAmount(e.target.value)
@@ -31,6 +51,9 @@ export default function AddTransaction() {
     }
     function transactionTypeHandler(e) {
         setTransactionType(e.target.value)
+        if (e.target.value == "lend") {
+            setLender(true)
+        }
     }
     function transactionWithHandler(e) {
         setTransactionWith(e.target.value)
@@ -41,59 +64,48 @@ export default function AddTransaction() {
 
 
     let form = new FormData()
-    async function submitHandler(e) {
-        form.append('transaction_type', transactionType)
-        form.append('transaction_with', transactionWith)
-        form.append('amount', amount)
-        form.append('reason', reason)
-        form.append('transaction_status', paid)
-        await axios.post(`auth/add_transaction/`, form,
-            { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}`, "Content-Type": "application/x-www-form-urlencoded" } })
-            .then(function (response) {
-                setOk(true)
-            })
-            .catch(function (error) {
-                console.log(error);
-            });
+    
+    
+        async function submitHandler(e) {
+            if (balance.balance < amount && transactionType == "lend") {
+                document.getElementById("errormsg").style.display ="block"
+            }
 
-        await axios.get(`auth/get_transactions/`,
-            { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}`, "Content-Type": "application/x-www-form-urlencoded" } })
-            .then(function (response) {
-                setAllTransaction(response.data.data)
-                localStorage.setItem("allTransaction", JSON.stringify(response.data.data))
-                navigate('/Home')
-            })
-            .catch(function (error) {
-                console.log(error);
-            });
-    }
-    function handleLogout() {
-        localStorage.clear()
-        navigate('/login')
-    }
+            else {form.append('transaction_type', transactionType)
+            form.append('transaction_with', transactionWith)
+            form.append('amount', amount)
+            form.append('reason', reason)
+            form.append('transaction_status', paid)
+            await axios.post(`auth/add_transaction/`, form,
+                { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}`, "Content-Type": "application/x-www-form-urlencoded" } })
+                .then(function (response) {
+                    setOk(true)
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+
+            await axios.get(`auth/get_transactions/`,
+                { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}`, "Content-Type": "application/x-www-form-urlencoded" } })
+                .then(function (response) {
+                    setAllTransaction(response.data.data)
+                    localStorage.setItem("allTransaction", JSON.stringify(response.data.data))
+                    navigate('/Home')
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+        }
+        function handleLogout() {
+            localStorage.clear()
+            navigate('/login')
+        }}
+    
+
 
     return (
         <>
-<div class="tabs-to-dropdown">
-            <div class="bg-dark nav-wrapper d-flex align-items-center justify-content-between">
-                <ul class="nav nav-pills d-none d-md-flex" id="pills-tab" role="tablist">
-                    <li class="nav-item " role="presentation">
-                        <Link to="/get_transactions" class="nav-link text-white" id="top-menu" data-toggle="pill" role="tab"
-                            aria-controls="pills-product" aria-selected="false">All Transactions</Link>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <Link to="/add_transaction" class="nav-link text-white" id="top-menu" data-toggle="pill" role="tab"
-                            aria-controls="pills-product" aria-selected="false">Add Transactions</Link>
-                    </li>
-                    <li onClick={handleLogout} class="nav-item" role="presentation">
-                        <a class="nav-link text-white" id="logout" data-toggle="pill" role="tab"
-                            aria-controls="pills-news" aria-selected="false">Logout</a>
-                    </li>
-                </ul>
-            </div>
-
-            <div class="container-fluid">
-            <div className="container mt-4">
+            <div className="container mt-4 col-6">
                 <Box
                     component="form"
                     sx={{
@@ -103,10 +115,11 @@ export default function AddTransaction() {
                     autoComplete="off"
                 >
                     <div style={{ textAlign: 'center' }}>
-                        <p className="text-dark display-6">Add New Transaction</p>
-                        <TextField id="outlined-basic" type="number" label="Amount" variant="outlined" style={{ width: "700px" }} className="my-2" onChange={amountHandler} /><br />
+                        <h2 className="text-dark mt-5 mb-5">Add New Transaction</h2>
+                        <p id="errormsg" style={{ color: "red", display: "none" }}>Insufficient balance!</p>
+                        <TextField id="outlined-basic" type="number" label="Amount" variant="outlined" style={{ width: "100%" }} className="my-2" onChange={amountHandler} /><br />
                         <TextareaAutosize
-                            style={{ width: "700px", padding: "0 10px" }}
+                            style={{ width: "100%", padding: "0 10px" }}
                             onChange={reasonHandler}
                             className="my-2"
                             aria-label="minimum height"
@@ -115,7 +128,7 @@ export default function AddTransaction() {
                         />
                         <br />
 
-                        <FormControl style={{ width: "700px", textAlign: "start" }} className="my-2">
+                        <FormControl style={{ width: "100%", textAlign: "start" }} className="my-2">
                             <InputLabel id="demo-simple-select-label">Transaction Type</InputLabel>
                             <Select
                                 labelId="demo-simple-select-label"
@@ -124,13 +137,13 @@ export default function AddTransaction() {
                                 label="Transaction Type"
                                 onChange={transactionTypeHandler}
                             >
-                                <MenuItem style={{ width: "700px", textAlign: "start" }} value="borrow">Borrow</MenuItem>
-                                <MenuItem style={{ width: "700px", textAlign: "start" }} value="lend">Lend</MenuItem>
+                                <MenuItem style={{ width: "100%", textAlign: "start" }} value="borrow">Borrow</MenuItem>
+                                <MenuItem style={{ width: "100%", textAlign: "start" }} value="lend">Lend</MenuItem>
                             </Select>
                         </FormControl>
                         <br />
 
-                        <FormControl style={{ width: "700px", textAlign: "start" }} className="my-2">
+                        <FormControl style={{ width: "100%", textAlign: "start" }} className="my-2">
                             <InputLabel id="demo-simple-select-label">Transaction With</InputLabel>
                             <Select
                                 labelId="demo-simple-select-label"
@@ -143,7 +156,9 @@ export default function AddTransaction() {
                                     !localStorage.getItem('allUser') ? null :
                                         JSON.parse(localStorage.getItem('allUser')).map((user) => {
                                             return (
-                                                <MenuItem style={{ width: "700px", textAlign: "start" }} value={user.id}>{user.username}</MenuItem>
+
+                                                <MenuItem style={{ width: "100%", textAlign: "start" }} value={user.id}>{user.username}</MenuItem>
+                                                // <MenuItem style={{ width: "100%", textAlign: "start" }} value={user.id}>{user.username}</MenuItem>
                                             )
                                         })
                                 }
@@ -151,23 +166,25 @@ export default function AddTransaction() {
                         </FormControl>
                         <br />
                         <div class="row">
-                            <div class="col-md" style={{ marginLeft: "1%" }}>
-                                <div >
-                                    <Checkbox
-                                        onClick={paidHandler}
-                                        sx={{ '& .MuiSvgIcon-root': { fontSize: 28 } }}
-                                    /><span className="text-dark" style={{ fontSize: "22px" }}>Paid</span>
-                                </div>
+                            <div class="col-2" style={{ marginLeft: "-2.5%" }}>
+                                {
+                                    lender ?
+                                        <div >
+                                            <Checkbox
+                                                onClick={paidHandler}
+                                                sx={{ '& .MuiSvgIcon-root': { fontSize: 28 } }}
+                                            /><span className="text-dark" style={{ fontSize: "20px", fontWeight: "400" }}>Paid</span>
+                                        </div> :
+                                        null
+                                }
                             </div>
                             <div class="col-md"></div>
                         </div>
-                        <br /><Button variant="contained" style={{ width: "700px" }} onClick={submitHandler}>Submit</Button>
+                        <br /><Button variant="contained" style={{ width: "100%" }} onClick={submitHandler}>Submit</Button>
                     </div>
 
                 </Box>
             </div>
-            </div>
-        </div>
         </>
     );
 }

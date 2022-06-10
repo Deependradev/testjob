@@ -32,5 +32,11 @@ module.exports=app=>(
             changeHandler:true,
         }
         ),
+        createProxyMiddleware("auth/all_type_balance/",
+        {
+            target:"http://127.0.0.1:8000/",
+            changeHandler:true,
+        }
+        ),
     )
 )
